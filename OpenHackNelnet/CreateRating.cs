@@ -6,25 +6,41 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs.Host;
 using Newtonsoft.Json;
+using System;
+using Microsoft.Extensions.Logging;
 
 namespace OpenHackNelnet
 {
     public static class CreateRating
     {
         [FunctionName("CreateRating")]
-        public static IActionResult Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]HttpRequest req, TraceWriter log)
+        public static IActionResult Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post",
+            Route = null)]HttpRequest req,
+            [CosmosDB(
+                databaseName: "Ratingsdb",
+                collectionName: "RatingsCollection",
+                ConnectionStringSetting = "MyCosmosDb")] ICollector<Rating> document,
+            ILogger log)
         {
-            log.Info("C# HTTP trigger function processed a request.");
+            log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string name = req.Query["name"];
+            Rating rating = new Rating();
+            rating.id = Guid.NewGuid();
+            rating.LocationName = "Test";
+            rating.productId = Guid.NewGuid();
+            rating.RatingValue = 4;
+            rating.Timestamp = new DateTime();
+            rating.userId = Guid.NewGuid();
+            rating.UserNotes = "SampleText";
 
-            string requestBody = new StreamReader(req.Body).ReadToEnd();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            document.Add(rating);
 
-            return name != null
-                ? (ActionResult)new OkObjectResult($"Hello, {name}")
-                : new BadRequestObjectResult("Please pass a name on the query string or in the request body");
+            return new OkResult();
+
         }
     }
+
+
+
+
 }
