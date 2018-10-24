@@ -4,6 +4,7 @@ using System.Text;
 
 namespace OpenHackNelnet
 {
+    //Test comment1
     public class Rating
     {
         public Guid id { get; set; }
