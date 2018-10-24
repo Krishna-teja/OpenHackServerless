@@ -48,11 +48,11 @@ namespace OpenHackNelnet
             }
 
             data.id = Guid.NewGuid();
-            data.timestamp = new DateTime();
+            data.timestamp = DateTime.UtcNow;
 
             document.Add(data);
 
-            return new OkResult();
+            return new OkObjectResult(data);
 
         }
     }
