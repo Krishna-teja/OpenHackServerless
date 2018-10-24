@@ -1,30 +1,48 @@
-
-using System.IO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Host;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
+using System;
+using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Documents;
+using System.Net;
 
 namespace OpenHackNelnet
 {
     public static class GetRating
     {
         [FunctionName("GetRating")]
-        public static IActionResult Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]HttpRequest req, TraceWriter log)
+        public static async Task<IActionResult> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get",
+            Route = null)]HttpRequest req,
+                    [CosmosDB(
+                databaseName: "Ratingsdb",
+                collectionName: "RatingsCollection",
+                ConnectionStringSetting = "MyCosmosDb")] DocumentClient client,
+                    ILogger log)
         {
-            log.Info("C# HTTP trigger function processed a request.");
+            log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string name = req.Query["name"];
+            string ratingId = req.Query["ratingId"];
+            if (string.IsNullOrWhiteSpace(ratingId))
+            {
+                return new NotFoundResult();
+            }
 
-            string requestBody = new StreamReader(req.Body).ReadToEnd();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
-
-            return name != null
-                ? (ActionResult)new OkObjectResult($"Hello, {name}")
-                : new BadRequestObjectResult("Please pass a name on the query string or in the request body");
+            try
+            {
+                Document doc = await client.ReadDocumentAsync(UriFactory.CreateDocumentUri("Ratingsdb", "RatingsCollection", ratingId));
+                return new OkObjectResult((Rating)(dynamic)doc);
+            }
+            catch (DocumentClientException de)
+            {
+                if(de.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return new NotFoundResult();
+                }
+                return new BadRequestObjectResult("Error occured while retrieving the rating");
+            }
         }
     }
 }
