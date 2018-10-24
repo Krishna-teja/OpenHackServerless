@@ -23,7 +23,7 @@ namespace OpenHackNelnet
                 ConnectionStringSetting = "MyCosmosDb")] ICollector<Rating> document,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            log.LogInformation("C# HTTP trigger function processed a request. --> Staging");
 
             string requestBody = new StreamReader(req.Body).ReadToEnd();
             var data = JsonConvert.DeserializeObject<Rating>(requestBody);
