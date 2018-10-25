@@ -29,7 +29,7 @@ namespace OpenHackNelnet
             var data = JsonConvert.DeserializeObject<Rating>(requestBody);
 
             if (data.userId == Guid.Empty || data.productId == Guid.Empty) return new BadRequestObjectResult("User ID or product is not available");
-            if((data.rating == null) || (data.rating < 0 || data.rating > 5) )
+            if(data.rating < 0 || data.rating > 5)
             {
                 return new BadRequestObjectResult("Rating is invalid");
             }
